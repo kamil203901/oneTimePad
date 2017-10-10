@@ -214,6 +214,7 @@ public class OneTimePad {
         jframe.setContentPane(new OneTimePad().panel1);
         jframe.setDefaultCloseOperation(jframe.EXIT_ON_CLOSE);
         jframe.pack();
+        jframe.setLocationRelativeTo(null);
         jframe.setVisible(true);
     }
 
