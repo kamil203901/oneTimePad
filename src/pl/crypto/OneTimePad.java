@@ -52,7 +52,7 @@ public class OneTimePad {
             public void actionPerformed(ActionEvent e) {
                 String message = messageFieldBeforeEncrypted.getText();
                 String salt = saltFieldBeforeEncrypted.getText();
-                String decryptedMessage = encryptMessage(message, salt.toCharArray());
+                String decryptedMessage = encryptMessage(message, salt);
                 encryptedMessageFieldAfterEncrypted.setText(decryptedMessage);
                 encryptedMessageFieldBeforeDecrypted.setText(decryptedMessage);
             }
@@ -77,7 +77,7 @@ public class OneTimePad {
             void update() {
                 String message = messageFieldBeforeEncrypted.getText();
                 int size = message.length();
-                char[] saltValue = generateRandomString(size);
+                String saltValue = generateRandomString(size);
                 saltFieldBeforeEncrypted.setText(null);
                 saltFieldBeforeEncrypted.setText(String.valueOf(saltValue));
                 saltFieldBeforeDecrypted.setText(String.valueOf(saltValue));
@@ -92,7 +92,7 @@ public class OneTimePad {
             public void actionPerformed(ActionEvent e) {
                 String encryptedMessage = encryptedMessageFieldBeforeDecrypted.getText();
                 String salt = saltFieldBeforeDecrypted.getText();
-                String message = decryptMessage(encryptedMessage, salt.toCharArray());
+                String message = decryptMessage(encryptedMessage, salt);
                 messageFieldAfterDecrypted.setText(message);
             }
         });
@@ -101,7 +101,7 @@ public class OneTimePad {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser c = new JFileChooser();
-                // Demonstrate "Open" dialog:
+
                 int rVal = c.showOpenDialog(fileChooser);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
                     String filename = c.getSelectedFile().getName();
@@ -151,7 +151,7 @@ public class OneTimePad {
             public void actionPerformed(ActionEvent e) {
                 String message = fileToEncryptValue.getText();
                 String salt = saltFieldValue.getText();
-                String decryptedMessage = encryptMessage(message, salt.toCharArray());
+                String decryptedMessage = encryptMessage(message, salt);
                 encryptedMessageFromFileField.setText(decryptedMessage);
             }
         });
@@ -200,7 +200,7 @@ public class OneTimePad {
             public void actionPerformed(ActionEvent e) {
                 String encryptedMessage = textField2.getText();
                 String salt = textField1.getText();
-                String message = decryptMessage(encryptedMessage, salt.toCharArray());
+                String message = decryptMessage(encryptedMessage, salt);
                 textArea1.setText(message);
             }
         });
@@ -216,6 +216,7 @@ public class OneTimePad {
         jframe.pack();
         jframe.setLocationRelativeTo(null);
         jframe.setVisible(true);
+
     }
 
 }
