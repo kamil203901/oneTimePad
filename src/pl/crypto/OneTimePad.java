@@ -5,23 +5,20 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 
 import static pl.crypto.Logic.*;
 
 public class OneTimePad {
 
     private JFrame fileChooser;
-    private JTextField saltFieldBeforeEncrypted;
+    private JTextField keyBeforeEncrypted;
     private JTextField messageFieldBeforeEncrypted;
     private JButton encryptButton;
     private JPanel encryptPanel;
     private JPanel decryptPanel;
     private JTextField encryptedMessageFieldBeforeDecrypted;
-    private JTextField saltFieldBeforeDecrypted;
+    private JTextField keyBeforeDecrypted;
     private JButton decryptButton;
     private JTextField messageFieldAfterDecrypted;
     private JTextField encryptedMessageFieldAfterEncrypted;
@@ -33,17 +30,19 @@ public class OneTimePad {
     private JLabel encryptedMessageLabel1;
     private JTabbedPane tabbedPane1;
     private JPanel panel1;
-    private JButton openButton;
-    private JTextArea fileToEncryptValue;
-    private JTextField saltFieldValue;
-    private JTextField encryptedMessageFromFileField;
-    private JButton openButton1;
-    private JTextField textField1;
-    private JTextField textField2;
+    private JButton openFileToEncryptButton;
+    private JTextField fileToEncryptPath;
+    private JTextField keyFilePath;
+    private JTextField encryptedFilePath;
+    private JButton openFileToDecryptButton;
+    private JTextField keyFilePath1;
+    private JTextField fileToDecryptPath;
     private JTextArea textArea1;
-    private JButton saveButton;
-    private JButton encryptButton1;
-    private JButton decryptButton1;
+    private JButton encryptFileButton;
+    private JButton decryptFileButton;
+    private JButton openKeyFileButton;
+    private JTextField decryptedFilePath;
+    private byte[] bytesKey;
 
 
     public OneTimePad() {
@@ -51,7 +50,7 @@ public class OneTimePad {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String message = messageFieldBeforeEncrypted.getText();
-                String salt = saltFieldBeforeEncrypted.getText();
+                String salt = keyBeforeEncrypted.getText();
                 String decryptedMessage = encryptMessage(message, salt);
                 encryptedMessageFieldAfterEncrypted.setText(decryptedMessage);
                 encryptedMessageFieldBeforeDecrypted.setText(decryptedMessage);
@@ -78,9 +77,9 @@ public class OneTimePad {
                 String message = messageFieldBeforeEncrypted.getText();
                 int size = message.length();
                 String saltValue = generateRandomString(size);
-                saltFieldBeforeEncrypted.setText(null);
-                saltFieldBeforeEncrypted.setText(String.valueOf(saltValue));
-                saltFieldBeforeDecrypted.setText(String.valueOf(saltValue));
+                keyBeforeEncrypted.setText(null);
+                keyBeforeEncrypted.setText(String.valueOf(saltValue));
+                keyBeforeDecrypted.setText(String.valueOf(saltValue));
 
                 encryptedMessageFieldAfterEncrypted.setText(null);
                 encryptedMessageFieldBeforeDecrypted.setText(null);
@@ -91,40 +90,25 @@ public class OneTimePad {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String encryptedMessage = encryptedMessageFieldBeforeDecrypted.getText();
-                String salt = saltFieldBeforeDecrypted.getText();
+                String salt = keyBeforeDecrypted.getText();
                 String message = decryptMessage(encryptedMessage, salt);
                 messageFieldAfterDecrypted.setText(message);
             }
         });
 
-        openButton.addActionListener(new ActionListener() {
+        openFileToEncryptButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser c = new JFileChooser();
-
                 int rVal = c.showOpenDialog(fileChooser);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
-                    String filename = c.getSelectedFile().getName();
+                    File file = c.getSelectedFile();
 
-                    FileReader fileReader;
-                    String fileContents = "";
-                    try {
-                        fileReader = new FileReader(filename);
-                        int i;
-
-                        while ((i = fileReader.read()) != -1) {
-                            char ch = (char) i;
-                            fileContents = fileContents + ch;
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-
-                    fileToEncryptValue.setText(fileContents);
+                    fileToEncryptPath.setText(file.getPath());
                 }
             }
         });
-        fileToEncryptValue.getDocument().addDocumentListener(new DocumentListener() {
+        fileToEncryptPath.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 update();
@@ -141,72 +125,98 @@ public class OneTimePad {
             }
 
             void update() {
-                int textSize = fileToEncryptValue.getText().length();
-                saltFieldValue.setText(String.valueOf(generateRandomString(textSize)));
-                textField1.setText(saltFieldValue.getText());
+                String filename = fileToEncryptPath.getText();
+
+                if (filename.equals("")) {
+                    return;
+                }
+
+                setBytesKey(generateRandomByte(getFileSize(filename)));
             }
         });
-        encryptButton1.addActionListener(new ActionListener() {
+        encryptFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String message = fileToEncryptValue.getText();
-                String salt = saltFieldValue.getText();
-                String decryptedMessage = encryptMessage(message, salt);
-                encryptedMessageFromFileField.setText(decryptedMessage);
+                String keyValueFilename = keyFilePath.getText();
+                String encryptedFilename = encryptedFilePath.getText();
+
+                if (keyValueFilename.equals("") || encryptedFilename.equals("")) {
+                    JOptionPane.showMessageDialog(getPanel1(), "Error. You must set all fields!");
+                    return;
+                }
+
+                saveByteArrayToFile(getBytesKey(), keyValueFilename);
+                encryptFile(new File(
+                        fileToEncryptPath.getText()).toPath(),
+                        encryptedFilename,
+                        convertFileToByteArray(new File(keyValueFilename).toPath()
+                        ));
+
+                JOptionPane.showMessageDialog(getPanel1(), "Encrypted successfully.");
+
             }
         });
-        saveButton.addActionListener(new ActionListener() {
+
+        openFileToDecryptButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String filename = JOptionPane.showInputDialog("Set filename: ");
-                File file = new File(filename);
-                try {
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-                    bw.write(encryptedMessageFromFileField.getText());
-                    bw.close();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                JFileChooser c= new JFileChooser();
+                int rVal = c.showOpenDialog(fileChooser);
+                if (rVal == JFileChooser.APPROVE_OPTION) {
+                    String decryptedFilename = c.getSelectedFile().getPath();
+                    fileToDecryptPath.setText(decryptedFilename);
                 }
 
             }
         });
-        openButton1.addActionListener(new ActionListener() {
+
+        openKeyFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser c = new JFileChooser();
-                String fileContents = "";
                 int rVal = c.showOpenDialog(fileChooser);
                 if (rVal == JFileChooser.APPROVE_OPTION) {
-                    String filename = c.getSelectedFile().getName();
-
-                    FileReader fileReader;
-                    try {
-                        fileReader = new FileReader(filename);
-                        int i;
-                        while ((i = fileReader.read()) != -1) {
-                            char ch = (char) i;
-                            fileContents = fileContents + ch;
-                        }
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                    String keyFilename = c.getSelectedFile().getPath();
+                    keyFilePath1.setText(keyFilename);
                 }
 
-                textField2.setText(fileContents);
+
+
+               // fileToDecryptPath.setText(filename);
             }
         });
-        decryptButton1.addActionListener(new ActionListener() {
+        decryptFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String encryptedMessage = textField2.getText();
-                String salt = textField1.getText();
-                String message = decryptMessage(encryptedMessage, salt);
-                textArea1.setText(message);
+                String keyFilename = keyFilePath1.getText();
+                String encryptedFilename = fileToDecryptPath.getText();
+                String decryptedFilename = decryptedFilePath.getText();
+
+                if (keyFilename.equals("") || encryptedFilename.equals("") || decryptedFilename.equals("")) {
+                    JOptionPane.showMessageDialog(getPanel1(), "All fields must be set!");
+                    return;
+                }
+
+                byte[] byteKey = convertFileToByteArray(new File(keyFilename).toPath());
+                decryptFile(new File(encryptedFilename).toPath(), decryptedFilename, byteKey);
+                JOptionPane.showMessageDialog(getPanel1(), "Decrypted file was saved successfully!");
+
             }
         });
 
     }
 
+    public byte[] getBytesKey() {
+        return bytesKey;
+    }
+
+    public void setBytesKey(byte[] bytesKey) {
+        this.bytesKey = bytesKey;
+    }
+
+    public JPanel getPanel1() {
+        return panel1;
+    }
 
     public static void main(String[] args) {
         JFrame jframe = new JFrame("OneTimePad");
