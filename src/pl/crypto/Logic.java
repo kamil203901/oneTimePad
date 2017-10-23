@@ -10,12 +10,12 @@ import java.util.Random;
 class Logic {
 
     static String generateRandomString(int size) {
-        String baseSaltLetters = "abcdefghijklmnoprstuwxyz";
+        String baseKeyLetters = "abcdefghijklmnoprstuwxyz";
         StringBuilder sb = new StringBuilder();
         Random random = new SecureRandom();
 
         for (int i = 0; i < size; i++) {
-            char c = baseSaltLetters.charAt(random.nextInt(baseSaltLetters.length()));
+            char c = baseKeyLetters.charAt(random.nextInt(baseKeyLetters.length()));
             sb.append(c);
         }
 
@@ -31,11 +31,11 @@ class Logic {
         return byteKey;
     }
 
-    static String encryptMessage(String message, String salt) {
+    static String encryptMessage(String message, String key) {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < message.length(); i++) {
-            int c = (message.charAt(i) ^ salt.charAt(i)) + 33;
+            int c = (message.charAt(i) ^ key.charAt(i)) + 33;
             sb.append((char)c);
         }
 
